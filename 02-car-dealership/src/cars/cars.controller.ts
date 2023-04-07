@@ -1,7 +1,10 @@
-import { Body, Controller, Delete, Get, Param, ParseIntPipe, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
+
 import { CarsService } from './cars.service';
+import { CreateCarDto } from './dto/create-car.dto';
 
 @Controller('cars')
+// @UsePipes( ValidationPipe )   //other module maybe need it, better applies en main (globally)
 export class CarsController {
 
     constructor(
@@ -14,22 +17,27 @@ export class CarsController {
     }
 
     @Get( ':id' )
-    getCarById( @Param('id', ParseIntPipe ) id: number ){         
+    getCarById( @Param('id', ParseUUIDPipe ) id: string ){         
         return this.carsService.findById(id)
     }
 
     @Post()
-    createCar( @Body() body: any ){
-        return body
+    // Here it only applies in the Post route, patch need it too, better apply in class
+    // @UsePipes( ValidationPipe )
+    createCar( @Body() createCarDto: CreateCarDto ){
+        return createCarDto
     }
 
     @Patch(':id')
-    updateCar( @Param('id', ParseIntPipe ) id: number, @Body() body: any ){
+    updateCar( 
+        @Param('id', ParseUUIDPipe ) id: string, 
+        @Body() body: any )
+    {
         return {body, id}
     }
 
     @Delete( ':id' )
-    deleteCar( @Param('id', ParseIntPipe ) id: number ){         
+    deleteCar( @Param('id', ParseUUIDPipe ) id: string ){         
         return id;
     }
 
