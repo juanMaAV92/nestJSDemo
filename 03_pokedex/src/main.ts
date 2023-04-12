@@ -9,6 +9,11 @@ async function main() {
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
+      // Convert data in Dto
+      transform: true,
+      transformOptions:{
+        enableImplicitConversion: true
+      }
     })
   );
 

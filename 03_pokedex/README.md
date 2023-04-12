@@ -92,6 +92,10 @@ docker-compose up -d
 ```
 mongodb://localhost:27017/nest-pokemon
 
+5. Reconstruir la base de datos con la semilla
+```http
+http://localhost:3000/api/v2/seed
+```
 ## Stack Usado
 * MongoDB
 * NestJs
