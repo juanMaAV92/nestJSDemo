@@ -92,7 +92,15 @@ docker-compose up -d
 ```
 mongodb://localhost:27017/nest-pokemon
 
-5. Reconstruir la base de datos con la semilla
+5. Clonar el archivo __.env.template__ y renombrar la copia a __.env__
+
+6. Llenar las variables de entorno definidas en el __.env.__
+
+7. Ejecutar la aplicación en dev:
+```sh
+yarn start:dev
+```
+8. Reconstruir la base de datos con la semilla
 ```http
 http://localhost:3000/api/v2/seed
 ```
