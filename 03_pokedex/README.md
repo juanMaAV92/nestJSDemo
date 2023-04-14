@@ -104,6 +104,16 @@ yarn start:dev
 ```http
 http://localhost:3000/api/v2/seed
 ```
-## Stack Usado
+
+# Production Build
+1. Crear ek archivo ```.env.prod```
+2. Llenar las variables de entorno para produccion
+3. Construir la imagen
+```sh
+docker-compose -f docker-compose.prod.yaml --env-file .env.prod up --build
+```
+
+
+# Stack Usado
 * MongoDB
 * NestJs
