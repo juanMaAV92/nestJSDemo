@@ -1,7 +1,8 @@
-import { BadRequestException, Injectable, InternalServerErrorException, Logger } from '@nestjs/common';
+import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
 import { Repository } from 'typeorm';
+import { validate as isUUID } from 'uuid';
 
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
@@ -16,14 +17,14 @@ export class ProductsService {
   constructor(
     
     @InjectRepository(Product)
-    private readonly productoRepository: Repository<Product>,
+    private readonly productRepository: Repository<Product>,
 
   ){}
   
   async create(createProductDto: CreateProductDto) {
     try {  
-      const product = this.productoRepository.create( createProductDto );
-      await this.productoRepository.save( product );
+      const product = this.productRepository.create( createProductDto );
+      await this.productRepository.save( product );
       return product;
 
     } catch (error) {
@@ -32,24 +33,38 @@ export class ProductsService {
   }
 
   async findAll( paginationDto: PaginationDto ) {
-    const { limit = 5, offset = 0 } = paginationDto;  
-    const products = await this.productoRepository.find({
+    const { limit = 10, offset = 0 } = paginationDto;  
+    const products = await this.productRepository.find({
+      take: limit,
       skip: offset,
-      take: limit
+      // TODO: relaciones
     });
     return products
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} product`;
+  async findOne( term: string ) {
+    let product: Product;    
+    if( isUUID( term ) ){
+      product = await this.productRepository.findOneBy({ id: term });
+    } else{
+      const queryBuilder = this.productRepository.createQueryBuilder();
+      product = await queryBuilder
+                        .where('title =:title or slug =:slug',{
+                          title: term,
+                          slug: term,
+                        }).getOne(); 
+    }     
+    if( !product ) throw new NotFoundException(`Product with term '${term}' not found`);
+    return product;
   }
 
-  update(id: number, updateProductDto: UpdateProductDto) {
+  async update(id: string, updateProductDto: UpdateProductDto) {
     return `This action updates a #${id} product`;
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} product`;
+  async remove(id: string) {
+    await this.findOne( id );
+    await this.productRepository.delete({ id: id });
   }
 
   private handleDBExceptions( error: any ){
