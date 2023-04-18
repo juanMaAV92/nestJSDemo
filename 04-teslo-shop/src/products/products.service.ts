@@ -49,9 +49,9 @@ export class ProductsService {
     } else{
       const queryBuilder = this.productRepository.createQueryBuilder();
       product = await queryBuilder
-                        .where('title =:title or slug =:slug',{
-                          title: term,
-                          slug: term,
+                        .where('UPPER(title) =:title or slug =:slug',{
+                          title: term.toUpperCase(),
+                          slug: term.toLowerCase(),
                         }).getOne(); 
     }     
     if( !product ) throw new NotFoundException(`Product with term '${term}' not found`);
@@ -59,7 +59,17 @@ export class ProductsService {
   }
 
   async update(id: string, updateProductDto: UpdateProductDto) {
-    return `This action updates a #${id} product`;
+    const product = await this.productRepository.preload({
+      id: id,
+      ...updateProductDto
+    });
+    if(!product) throw new NotFoundException(`Producto with id '${id}' not found`)
+    try {
+      await this.productRepository.save( product );
+    } catch (error) {
+      this.handleDBExceptions( error );
+    }
+    return product;
   }
 
   async remove(id: string) {
