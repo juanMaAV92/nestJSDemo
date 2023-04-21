@@ -1,4 +1,5 @@
-import { BeforeInsert, BeforeUpdate, Column, Entity, PrimaryGeneratedColumn } from "typeorm";
+import { BeforeInsert, BeforeUpdate, Column, Entity, OneToMany, PrimaryGeneratedColumn } from "typeorm";
+import { ProductImage } from "./producto-image.entity";
 
 
 @Entity()
@@ -46,6 +47,15 @@ export class Product {
         default: []
     })
     tags: string[];
+
+    @OneToMany(
+        () => ProductImage,
+        (productImage) => productImage.product,
+        { cascade: true, eager: true } // Eager para cargar relaciones automaticamente en un find*
+    )
+    images?: ProductImage[];
+
+
 
     @BeforeInsert()
     checkSlugInsert(){
