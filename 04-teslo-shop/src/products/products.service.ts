@@ -1,7 +1,7 @@
 import { BadRequestException, Injectable, InternalServerErrorException, Logger, NotFoundException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { validate as isUUID } from 'uuid';
 
 import { CreateProductDto, UpdateProductDto  } from './dto';
@@ -21,6 +21,7 @@ export class ProductsService {
     @InjectRepository(ProductImage)
     private readonly productImageRepository: Repository<ProductImage>,
 
+    private readonly dataSource: DataSource,
   ){}
   
   async create(createProductDto: CreateProductDto) {
@@ -80,23 +81,53 @@ export class ProductsService {
   }
 
   async update(id: string, updateProductDto: UpdateProductDto) {
-    const product = await this.productRepository.preload({
-      id: id,
-      ...updateProductDto,
-      images: []
-    });
+
+    const { images, ...toUpdate } = updateProductDto;
+    const product = await this.productRepository.preload({ id, ...toUpdate });
     if(!product) throw new NotFoundException(`Producto with id '${id}' not found`)
+    
+    // Create query runner
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    
     try {
-      await this.productRepository.save( product );
+      
+      if( images ){
+        await queryRunner.manager.delete( ProductImage, { product: { id } })
+        product.images = images.map( 
+          image => this.productImageRepository.create( { url: image } ))
+      }else{
+        /// ???
+
+      }
+      await queryRunner.manager.save ( product );
+      await queryRunner.commitTransaction();
+      await queryRunner.release();
+      // await this.productRepository.save( product );
     } catch (error) {
+      await queryRunner.rollbackTransaction();
+      await queryRunner.release();
       this.handleDBExceptions( error );
     }
-    return product;
+    return this.findOnePlain( id );
   }
 
   async remove(id: string) {
     await this.findOne( id );
     await this.productRepository.delete({ id: id });
+  }
+
+  async deleteAllProduct(){
+    const query = this.productRepository.createQueryBuilder('product');
+    try {
+      return await query
+        .delete()
+        .where({})
+        .execute();
+    } catch (error) {
+      this.handleDBExceptions(error);
+    }
   }
 
   private handleDBExceptions( error: any ){
