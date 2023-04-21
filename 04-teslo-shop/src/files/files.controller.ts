@@ -1,14 +1,21 @@
-import { Controller, Post, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { createReadStream } from 'fs';
+
+import { BadRequestException, Controller, Get, Header, Param, Post, Res, StreamableFile, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
+import { ConfigService } from '@nestjs/config';
 
 import { diskStorage } from 'multer';
 
 import { FilesService } from './files.service';
-import { fileFilter } from './helpers/fileFilter.helper';
+import { fileFilter, fileNamer } from './helpers';
 
 @Controller('files')
 export class FilesController {
-  constructor(private readonly filesService: FilesService) {}
+  
+  constructor(
+    private readonly filesService: FilesService,
+    private readonly configServicer: ConfigService  
+  ) {}
 
 
   @Post('product')
@@ -16,13 +23,25 @@ export class FilesController {
     fileFilter: fileFilter,
     // limits: { fileSize: 1000 },
     storage: diskStorage({
-      destination: './static/uploads',
-      
+      destination: './static/products',
+      filename: fileNamer
     })
   }) )
   uploadProductImage( 
     @UploadedFile() file: Express.Multer.File,
     ){
-    return file;
+
+    if( !file ) throw new BadRequestException('Make sure that the file is an image');
+
+    const secureUrl = `${ this.configServicer.get('HOST_API') }/files/product/${ file.filename }`
+
+    return {secureUrl};
+  }
+
+  @Get('product/:imageName')
+  @Header('Content-Type', 'image/jpeg')
+  findProductImage(@Param('imageName') imgName: string) {
+    const stream = createReadStream(this.filesService.getStaticProductImage(imgName));    
+    return new StreamableFile(stream);
   }
 }
