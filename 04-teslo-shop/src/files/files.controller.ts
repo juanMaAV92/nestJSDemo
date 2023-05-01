@@ -1,6 +1,7 @@
 import { createReadStream } from 'fs';
+import { ApiTags } from '@nestjs/swagger';
 
-import { BadRequestException, Controller, Get, Header, Param, Post, Res, StreamableFile, UploadedFile, UseInterceptors } from '@nestjs/common';
+import { BadRequestException, Controller, Get, Header, Param, Post, StreamableFile, UploadedFile, UseInterceptors } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ConfigService } from '@nestjs/config';
 
@@ -9,6 +10,7 @@ import { diskStorage } from 'multer';
 import { FilesService } from './files.service';
 import { fileFilter, fileNamer } from './helpers';
 
+@ApiTags('Files - get and upload')
 @Controller('files')
 export class FilesController {
   
