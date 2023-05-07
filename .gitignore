@@ -1,1 +1,5 @@
-04-teslo-shop/.env
+
+dist
+node_modules
+.env
+mongo
