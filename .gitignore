@@ -1,1 +1,4 @@
 /mongo
+dist
+node_modules
+.env
